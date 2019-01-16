@@ -57,7 +57,7 @@ class Server:
         print("New Client Connected: ", client)
 
     def startAcceptingClients(self, host, port):
-        socket = sockt.socket()
+        socket = sockt.socket(sockt.AF_INET, sockt.SOCK_STREAM)
         print("Starting Server...")
         print("Waiting for clients...")
         socket.bind((host, port))
