@@ -19,5 +19,10 @@ def createConnection(host, port):
         response = sockt.recv(1014)
         print(response.decode())
 
+class Name:
+    def __iter__(self):
+        yield "first", "firstNameValue"
+        yield "last", "lastNameValue"
+
 if __name__ == "__main__":
     createConnection('127.0.0.1', 5000)

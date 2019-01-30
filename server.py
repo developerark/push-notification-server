@@ -2,6 +2,8 @@ import socket as sockt
 from threading import Thread
 import time
 from flask import Flask, request, jsonify
+import json
+import sys
 
 class Client:
     def __init__(self, connection, address):
@@ -23,6 +25,11 @@ class Notification:
 
     def __str__(self):
         return str(self.destinationID) + ", " + str(self.sourceID) + ", " + str(self.message)
+
+    def __iter__(self):
+        yield "destinationID", self.destinationID
+        yield "sourceID", self.sourceID
+        yield "message", self.message
 
 class Server:
     clients = []
@@ -57,14 +64,14 @@ class Server:
         print("New Client Connected: ", client)
 
     def startAcceptingClients(self, host, port):
-        socket = sockt.socket(sockt.AF_INET, sockt.SOCK_STREAM)
+        self.socket = sockt.socket(sockt.AF_INET, sockt.SOCK_STREAM)
         print("Starting Server...")
         print("Waiting for clients...")
-        socket.bind((host, port))
-        socket.listen(5)
+        self.socket.bind((host, port))
+        self.socket.listen(5)
 
         while True:
-            connection, address = socket.accept()
+            connection, address = self.socket.accept()
             client = Client(connection, address)
             Server.clients.append(client)
             thread = Thread(target=self.handleNewClient, args=(client,))
@@ -82,7 +89,7 @@ class Server:
             Server.notifications[notification.destinationID].append(notification)
         except Exception as error:
             Server.notifications.update({notification.destinationID: [notification]})
-        return str(notification) + " added"
+        return jsonify(dict(notification))
 
     def broadcast(self):
         while True:
@@ -95,13 +102,13 @@ class Server:
 
                 for notification in notifications:
                     try:
-                        client.send(str(notification))
+                        client.send(json.dumps(dict(notification)))
                         notifications.remove(notification)
                     except Exception as error:
                         print(str(error) + ": %s disconnected" % (client.ID))
                         client.connection.close()
                         Server.removeClient(client)
-            time.sleep(0.0001)
+            time.sleep(0.1)
 
 if __name__ == "__main__":
     server = Server()
